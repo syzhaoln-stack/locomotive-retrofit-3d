@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#edf1ed"><meta name="description" content="交互查看内燃机车油改电方案：机械底盘、电池与电气连接，逐步拆换、部件消隐。支持手机和电脑。">
+  <title>机车油改电 · 三维拆换演示</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="#" aria-label="机车油改电三维展示首页"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M5 22V12h5V6h7v6h12v10M3 25h28M9 28h2m12 0h2M12 9h2M8 17h3m4 0h3m4 0h3"/></svg><span><strong>机车油改电</strong><small>三维拆换演示</small></span></a>
+    <div class="header-actions"><span class="concept-label">方案模型</span><button id="share" class="quiet-button" title="复制当前步骤的分享链接">分享<span class="desktop-word">此视图</span><span aria-hidden="true"> ↗</span></button><button id="help" class="icon-button" aria-label="查看操作说明">?</button></div>
+  </header>
+  <main class="workbench">
+    <section class="stage" aria-label="交互三维模型" id="stage">
+      <canvas id="model-canvas" tabindex="0" aria-label="机车三维视图。拖动旋转，双指缩放和平移；也可用视角按钮操作。"></canvas>
+      <div class="stage-heading"><span class="stage-number" id="stage-number">01</span><div><h1 id="stage-title">原车总览</h1><p id="stage-subtitle">柴油动力单元仍在车内</p></div></div>
+      <div id="loading" class="loading-screen" role="status"><img src="./assets/poster.png" alt="机车方案预览"><div class="loading-card"><span class="loader-dot"></span><strong id="loading-title">正在载入三维模型</strong><span id="loading-progress">准备几何与材质…</span><div class="loading-track"><i id="loading-bar"></i></div><button id="retry" hidden>重新加载</button><button id="fallback-video" class="quiet-button" hidden>观看拆换视频</button></div></div>
+      <div class="view-tools" aria-label="模型视角工具"><button id="fit" title="模型适合画面" aria-label="模型适合画面"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 8h8v8H8z"/></svg></button><button id="rotate-toggle" aria-pressed="false" title="自动旋转" aria-label="开启自动旋转"><svg viewBox="0 0 24 24"><path d="M20 8A9 9 0 1 0 21 15M20 3v6h-6"/></svg></button><button id="fullscreen" title="全屏查看" aria-label="全屏查看"><svg viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></svg></button></div>
+      <div class="selection-card" id="selection" hidden><span class="selection-label">已选部件</span><strong id="selection-name"></strong><div><button id="hide-selected">隐藏</button><button id="isolate-selected">仅看此件</button><button id="clear-selection" aria-label="取消选择">×</button></div></div>
+      <div class="empty-stage" id="empty-stage" hidden><p>本步骤的部件已隐藏</p><button class="primary-button" id="empty-restore">恢复本步骤</button></div>
+      <div class="stage-footer"><span class="gesture-hint" id="gesture-hint">拖动旋转 · 滚轮缩放 · 点击部件</span><span id="visibility-status" hidden></span><button id="quick-restore" hidden>恢复显示</button></div>
+      <div class="axis-mark" aria-hidden="true"><span>车头</span><i>→</i></div>
+    </section>
+    <aside class="control-panel" aria-label="展示控制">
+      <nav class="panel-tabs" aria-label="控制面板"><button class="active" data-panel="steps" aria-selected="true">拆换步骤</button><button data-panel="parts" aria-selected="false">部件消隐</button><button data-panel="views" aria-selected="false">视角</button></nav>
+      <section class="panel-content active" id="panel-steps" aria-label="拆换步骤">
+        <div class="playback"><button id="play" class="primary-button"><span id="play-symbol">▶</span><span id="play-text">自动演示</span></button><button id="previous" class="step-arrow" aria-label="上一步">←</button><button id="next" class="step-arrow" aria-label="下一步">→</button></div>
+        <div id="step-list" class="step-list"></div>
+        <p class="panel-note">切换步骤会恢复该步骤的默认显示。</p>
+      </section>
+      <section class="panel-content" id="panel-parts" aria-label="部件消隐">
+        <div class="parts-toolbar"><button id="restore-parts">恢复本步骤</button><button id="undo-hide" disabled>撤销隐藏</button></div>
+        <input type="search" id="part-search" placeholder="查找电池、轮对、机罩…" aria-label="查找部件">
+        <div class="quick-presets"><button id="show-electric">看电气</button><button id="show-mechanical">看底盘</button></div>
+        <div id="parts-list"></div><p class="panel-note">勾选显示、取消勾选隐藏。也可直接点选模型部件。</p>
+      </section>
+      <section class="panel-content" id="panel-views" aria-label="预设视角">
+        <h2>预设视角</h2><div class="camera-grid"><button data-view="overall" class="active">整体斜视</button><button data-view="side">正侧视</button><button data-view="front">车头</button><button data-view="top">俯视</button><button data-view="bogie">转向架</button><button data-view="electrical">电气舱</button></div>
+        <h2>画面</h2><label class="setting-row"><span>显示轨道</span><input id="track-toggle" type="checkbox" checked></label><label class="setting-row"><span>精细阴影</span><input id="shadow-toggle" type="checkbox"></label>
+        <p class="panel-note">双指可缩放和平移。手机横屏可获得更宽的视野。</p>
+        <div class="legend"><h2>连接颜色</h2><span><i style="--swatch:#ef792d"></i>高压直流</span><span><i style="--swatch:#d5a92b"></i>三相牵引</span><span><i style="--swatch:#3586cf"></i>低压 / 控制</span><span><i style="--swatch:#25a79c"></i>液冷管路</span></div>
+      </section>
+      <footer class="panel-footer"><button id="model-note">模型依据与说明</button><a id="repo-link" href="https://github.com/syzhaoln-stack/locomotive-retrofit-3d" target="_blank" rel="noopener">GitHub ↗</a></footer>
+    </aside>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="help-dialog"><button class="dialog-close" data-close aria-label="关闭说明">×</button><h2>从任何角度看清拆换过程</h2><dl><dt>旋转</dt><dd>鼠标左键拖动，或单指拖动。</dd><dt>缩放 / 平移</dt><dd>滚轮缩放，右键拖动平移；手机用双指操作。</dd><dt>消隐</dt><dd>点击模型选择部件，再点“隐藏”或“仅看此件”；“恢复本步骤”可随时返回。</dd><dt>拆换步骤</dt><dd>选择步骤，或点击“自动演示”。改变步骤会清除手动消隐。</dd><dt>键盘</dt><dd>焦点在三维画面时，← →切换步骤，空格播放或暂停，Home适合画面，Esc取消隔离。</dd></dl><p class="model-disclaimer">外观参考用户提供的视频，庆典条幅已去除。车长约18.8米、宽3.2米、高4.65米，1435毫米轨距和六轴配置均为方案假设；内部布局与线路为可视化示意，需按原车图纸校准。</p><a href="./sources.html" target="_blank" rel="noopener">查看公开参考来源 ↗</a></dialog>
+  <dialog id="video-dialog"><button class="dialog-close" data-close aria-label="关闭视频">×</button><h2>拆卸与更换演示</h2><video controls playsinline preload="none" poster="./assets/poster.png"><source src="./assets/retrofit.mp4" type="video/mp4"></video></dialog>
+  <script type="module" src="/src/main.js"></script>
+</body></html>
