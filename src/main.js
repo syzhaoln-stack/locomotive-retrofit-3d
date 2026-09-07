@@ -60,6 +60,8 @@ function setStep(n,{auto=false,initial=false}={}){
 }
 function applyVisibility(){
  for(const [id,g]of groups)g.visible=effectiveVisible(id,step,hidden,isolated,partMap);
+ // Ancestor groups keep child transforms; their own geometry must not enter an isolated child view.
+ for(const mesh of meshes){const id=mesh.userData.semanticId;mesh.visible=!isolated||id===isolated||ancestors(id,partMap).includes(isolated);}
  const visible=parts.filter(p=>p.partId!=='track'&&effectiveVisible(p.partId,step,hidden,isolated,partMap));
  $('#empty-stage').hidden=visible.length>0;
  const modified=hidden.size>0||isolated;
@@ -203,7 +205,7 @@ function tick(time){
 function fail(message){$('#loading').hidden=false;$('.loader-dot').hidden=true;$('#loading-title').textContent='三维模型暂未加载';$('#loading-progress').textContent=message;$('.loading-track').hidden=true;$('#retry').hidden=false;$('#fallback-video').hidden=false;pause();stage.dataset.ready='error';}
 async function init(){
  try{
-  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;renderer.shadowMap.enabled=shadows;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor(0x000000,0);
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;renderer.shadowMap.enabled=shadows;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.setClearColor(0x000000,0);
   scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(38,1,.05,500);camera.position.set(24,16,28);
   const pmrem=new THREE.PMREMGenerator(renderer);const room=new RoomEnvironment();const env=pmrem.fromScene(room,.04);scene.environment=env.texture;scene.environmentIntensity=.85;room.dispose();pmrem.dispose();
   scene.add(new THREE.HemisphereLight(0xeaf6ff,0x899878,1.15));light=new THREE.DirectionalLight(0xfff4df,2.4);light.position.set(6,17,8);light.castShadow=shadows;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-15;light.shadow.camera.right=15;light.shadow.camera.top=15;light.shadow.camera.bottom=-15;light.shadow.normalBias=.08;light.shadow.bias=-.0003;scene.add(light);scene.add(light.target);
